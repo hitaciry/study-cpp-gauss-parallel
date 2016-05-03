@@ -4,7 +4,7 @@
 #include <ctime>
 double** dataGenA( int const len) {
 	double** data= new double*[len];
-	srand(time(NULL));
+	//srand(time(NULL));
 	for (int i = 0; i < len; i++)
 	{
 		data[i] = new double[len];
@@ -32,40 +32,29 @@ double* dataGenB(int len,double** dataA) {
 int main(int argc, char *argv[])
 {
 	int const n = 3000;
-	double** a = dataGenA(n);/*{  {2,4,1},
-						{5,2,1},
-						{2,3,4} };*/
-	double** left =new double*[n];
-	for (int i = 0; i < n; i++) left[i] = new double[n] {0};
+	double** a = dataGenA(n);
 	double* x =new double[n] { 0 };
-	double* b =dataGenB(n,a) /*{ 36,47,37 }*/;
+	double* b = dataGenB(n, a);
 
 	auto start = clock();
-		//#pragma omp parallelfor nowait
+	#pragma omp for
 	for (int k = 0; k < n; k++)
 	{
-		//parallel i
-		#pragma omp parallelfor nowait
-		for (int i = k + 1; i < n; i++)
-		{
-			left[i][k] = a[i][k] / a[k][k];
-			b[i] -= left[i][k] * b[k];
-		}
-		//parallel j
-		#pragma omp parallelfor nowait
 		for (int j = k+1; j < n; j++)
 		{
+			double left = a[j][k] / a[k][k];
+			b[j] -= left * b[k];
 			for (int i = 0; i < n; i++)
 			{
-				a[j][i] -= left[j][k] * a[k][i];
+				a[j][i] -= left * a[k][i];
 			}
 		}
 	}
-		//#pragma omp parallelfor nowait
+	#pragma omp for 
 	for (int i = n - 1; i > -1; i--)
 	{
 		//parallel j
-		#pragma omp parallelfor nowait
+		//#pragma omp for
 		for (int j = n-1; j >i ; j--)
 		{
 			b[i] -= a[i][j] * b[j];
